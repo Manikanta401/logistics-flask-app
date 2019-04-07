@@ -9,7 +9,8 @@ from validate_email import validate_email
 import base64
 # from elasticsearch import Elasticsearch
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import logout_user, login_user, LoginManager, UserMixin, login_required
+from flask_login import logout_user, login_user, LoginManager, UserMixin, login_required, current_user
+import sqlite3
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///C:/Users/Amar/PycharmProjects/BoltCargo/login.db'
@@ -20,12 +21,6 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-mobile_sessions = {}
-# account_sid = "AC183c725849f24c3eb29044c68742ad9a"
-
-# auth_token = "3845f02ba8f6bfaabd15b5104c26f27e"
-
-# client = Client(account_sid, auth_token)
 mobile_number = ''
 
 
@@ -36,15 +31,16 @@ def load_user(user_id):
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
-    global mobile_sessions
     message = {}
     global mobile_number
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
     if request.method == 'POST':
-        # mobile_number = request.form.get('number')
+
         email_id = request.form.get('email')
         password = request.form.get('password')
         if (email_id is not None and password is not None):
-            # rule = re.match("^[789]\d{9}$", mobile_number)
+
             valid_email = validate_email(email=email_id)
             if valid_email and len(password) > 6:
                 user = UserModel.query.filter_by(email=email_id).first()
@@ -54,16 +50,7 @@ def login():
 
                 login_user(user=user)
                 return redirect(url_for('details'))
-                # number = random_with_N_digits(4)
-                # print(number)
-                #  mobile_sessions[mobile_number] = str(number)
-                #  print("+91{mobile}".format(mobile=mobile_number))
-                #  message = client.messages.create(
-                #      to="+91{mobile}".format(mobile=mobile_number),
-                #       from_="+12082686450",
-                #       body="Dear User, your one time password for BoltCargo login is {otp_number}".format(
-                #           otp_number=number))
-                return redirect(url_for('authenticate', messages=mobile_sessions))
+
             else:
                 message = {"status": "false", "message": "Invalid Email Id / Password."}
         else:
@@ -74,9 +61,12 @@ def login():
 
 @app.route('/register', methods=['POST', 'GET'])
 def register():
-    global mobile_sessions
     message = {}
     global mobile_number
+
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         mobile_number = request.form.get('number')
         email_id = request.form.get('email')
@@ -100,10 +90,9 @@ def register():
 
                     db.session.add(new_user)
                     db.session.commit()
-                    # login_user(user=user)
-                    return redirect(url_for('login'))
+                    login_user(user=user)
+                    return redirect(url_for('details'))
 
-                    # return redirect(url_for('authenticate', messages=mobile_sessions))
                 else:
                     message = {"status": "false", "message": "Invalid Email Id / Password."}
         else:
@@ -114,6 +103,8 @@ def register():
 
 @app.route('/')
 def hello_world():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
     message = {'status': "intermediate"}
     return render_template('login.html', message=message)
 
@@ -122,23 +113,38 @@ def hello_world():
 @login_required
 def dashboard():
     data = {}
+    details = DetailsModels.query.filter_by(email=current_user.email).first()
+    if (details is not None):
+        data = {'name': details.business_name, 'type': details.user_type, 'email': details.email}
+        return render_template('dashboard.html', message=data)
     if request.method == 'POST':
-
         type = request.form.get('type')
         name = request.form.get('name')
         email = request.form.get('email')
+        conn = create_connection('C:/Users/Amar/PycharmProjects/BoltCargo/login.db')
+        with conn:
+            create_details(conn, (email, type, name))
+
         data = {'name': name, 'type': type, 'email': email}
-        #print(data)
+
     return render_template('dashboard.html', message=data)
 
 
 @app.route('/details', methods=['POST', 'GET'])
 def details():
     message = {'status': "intermediate"}
+
     if request.method == 'POST':
         business_type = request.form.get('type')
         buisness_name = request.form.get('name')
         business_email = request.form.get('email')
+        details = (business_email, business_type, buisness_name)
+        details = DetailsModels.query.filter_by(email=current_user.email).first()
+        if (details is None):
+            conn = create_connection('C:/Users/Amar/PycharmProjects/BoltCargo/login.db')
+            with conn:
+                create_details(conn, details)
+
         if (business_type is None or len(business_type) == 0):
             message = {"status": "false",
                        "message": "Enter your type of buisness: Shipper, Forwarder, Transporter, Admin"}
@@ -158,6 +164,7 @@ def details():
     return render_template('business_details.html', message=message)
 
 
+# Below route is not used currently
 @app.route('/authenticate', methods=['POST', 'GET'])
 def authenticate():
     message = {}
@@ -184,5 +191,27 @@ class UserModel(UserMixin, db.Model):
     password = db.Column(db.String(100))
     mobile = db.Column(db.String(50))
 
-# if __name__ == '__main__':
-#    app.run()
+
+class DetailsModels(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100), unique=True)
+    user_type = db.Column(db.String(100))
+    business_name = db.Column(db.String(100))
+
+
+def create_details(conn, details_model):
+    sql = ''' INSERT INTO details_models(email,user_type,business_name)
+              VALUES(?,?,?) '''
+    cur = conn.cursor()
+    cur.execute(sql, details_model)
+    return cur.lastrowid
+
+
+def create_connection(db_file):
+    try:
+        conn = sqlite3.connect(db_file)
+        return conn
+    except Error as e:
+        print(e)
+
+    return None

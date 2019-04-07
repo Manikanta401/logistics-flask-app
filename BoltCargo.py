@@ -29,6 +29,9 @@ def load_user(user_id):
     return UserModel.query.get(int(user_id))
 
 
+# This route is used to login the user in the application
+# Post successful login, the user is redirected to details page.
+# If user is already authenticated, it is redirected to dashboard.
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     message = {}
@@ -59,6 +62,9 @@ def login():
     return render_template('login.html', message=message)
 
 
+# This route is used to register user in the application
+# If user is already authenticated, the route will be redirected to dashboard
+# Post succesful registration, the user reg. details are stored in database and redirected to details page
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     message = {}
@@ -101,6 +107,8 @@ def register():
     return render_template('register.html', message=message)
 
 
+# This is the index page of the application
+# If user is already logged, it is redirected to the dashboard page
 @app.route('/')
 def hello_world():
     if current_user.is_authenticated:
@@ -109,6 +117,8 @@ def hello_world():
     return render_template('login.html', message=message)
 
 
+# This is the dashboard page of the application
+# This shows the user details and in future the more functionality will be added, like booking transporters etc
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
@@ -130,6 +140,9 @@ def dashboard():
     return render_template('dashboard.html', message=data)
 
 
+# This is the details page of the application where the basic details are collected of the user
+# The details filled here by the user are populated into dashboard page
+# This route is important from business perspective
 @app.route('/details', methods=['POST', 'GET'])
 def details():
     message = {'status': "intermediate"}
@@ -165,6 +178,7 @@ def details():
 
 
 # Below route is not used currently
+# Below route is useless for now
 @app.route('/authenticate', methods=['POST', 'GET'])
 def authenticate():
     message = {}
@@ -179,12 +193,17 @@ def authenticate():
     return render_template('otp_auth.html', message=message)
 
 
+# The method generates 4 digit OTP.
+# This was initially used for sending the OTP messages using Twilio.
+# This method might be needed in future for sending the OTPs.
 def random_with_N_digits(n):
     range_start = 10 ** (n - 1)
     range_end = (10 ** n) - 1
     return randint(range_start, range_end)
 
 
+# This is user model for login
+# It stores the email id, password and mobile number of the user.
 class UserModel(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True)
@@ -192,6 +211,8 @@ class UserModel(UserMixin, db.Model):
     mobile = db.Column(db.String(50))
 
 
+# This is the details model. This schema is used by 'details' route for storing user details
+# It stores business email, business type, and business name
 class DetailsModels(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True)
@@ -199,6 +220,8 @@ class DetailsModels(UserMixin, db.Model):
     business_name = db.Column(db.String(100))
 
 
+# This method inserts the details of the user into database.
+# It stores business email, business type, and business name from details page or dashboard page
 def create_details(conn, details_model):
     sql = ''' INSERT INTO details_models(email,user_type,business_name)
               VALUES(?,?,?) '''
@@ -207,6 +230,8 @@ def create_details(conn, details_model):
     return cur.lastrowid
 
 
+# This method creates the connection from app to the database.
+# This is used for storing the details information of the user.
 def create_connection(db_file):
     try:
         conn = sqlite3.connect(db_file)

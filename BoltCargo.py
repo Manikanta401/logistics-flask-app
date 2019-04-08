@@ -114,7 +114,7 @@ def hello_world():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     message = {'status': "intermediate"}
-    return render_template('login.html', message=message)
+    return render_template('index.html', message=message)
 
 
 # This is the dashboard page of the application

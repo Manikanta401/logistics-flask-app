@@ -267,6 +267,7 @@ iframe {
     display: inline-block;
     text-align: center;
     margin: 0 auto;
+    padding: 0,0,50px,80px;
 }
 
 .otp {
@@ -327,6 +328,20 @@ iframe {
     height: 50px;
     border-radius: 25px;
     padding: 0 30px 0 68px;
+}
+
+.input200 {
+    font-family: Poppins-Medium;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #666666;
+
+    display: block;
+    width: 100%;
+    background: #e6e6e6;
+    height: 50px;
+    border-radius: 25px;
+    padding: 0 0px 0 0px;
 }
 
 /*------------------------------------------------------------------

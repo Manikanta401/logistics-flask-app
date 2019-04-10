@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>BoltCargo - OTP</title>
+    <title>Boltcargo - OTP</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!--===============================================================================================-->
@@ -25,18 +25,19 @@
 <div class="limiter">
     <div class="container-login100">
         <div class="wrap-login100">
-            <form class="login200-form validate-form" action="dashboard" method="post">
+            <form class="login200-form validate-form" action="details" method="post">
 					<span class="login100-form-title">
 						Enter your details
 					</span>
 
-                <div class="wrap-input100 validate-input" data-validate="Enter User Type">
+                {#<div class="wrap-input100 validate-input" data-validate="Enter User Type">
                     <input class="input100" type="text" name="type" placeholder="Type of User">
                     <span class="focus-input100"></span>
                     <span class="symbol-input100">
 							<i class="fa fa-envelope" aria-hidden="true"></i>
 						</span>
-                </div>
+                </div>#}
+
 
                 <div class="wrap-input100 validate-input" data-validate="Enter Buisness Email">
                     <input class="input100" type="text" name="email" placeholder="Buisness Email">
@@ -50,15 +51,50 @@
                     <input class="input100" type="text" name="name" placeholder="Buisness Name">
                     <span class="focus-input100"></span>
                     <span class="symbol-input100">
-							<i class="fa fa-envelope" aria-hidden="true"></i>
+							<i class="fa fa-address-book" aria-hidden="true"></i>
 						</span>
+                </div>
+
+                <div class="wrap-input100 validate-input" data-validate="Enter User Type">
+                    <select name="type" class="input100 validate-input">
+                        <option selected>Business Type</option>
+                        <option value="Forwarder">Forwarder</option>
+                        <option value="Shipper">Shipper</option>
+                        <option value="Transporter">Transporter</option>
+                    </select>
+                </div>
+
+                {#<div class="wrap-input100 validate-input" data-validate="Enter KYC Details">
+                    <select name="kyc" id="kyc" class="input100 validate-input">
+                        <option selected>KYC Details</option>
+                        <option value="GST No.">GST No.</option>
+                        <option value="Adhar Card">Adhar Card</option>
+                        <option value="Pancard">Pancard</option>
+                    </select>
+                </div>#}
+
+                {#<div>
+                    <input style="padding-left: 20px" type="file" name="file">
+                </div>#}
+
+                <div class="container-login100-form-btn">
+                    {% if message.get('kyc_status') == 'true' %}
+                        <div class="wrap-input100 validate-input" data-validate="Enter KYC Details">
+                            <input class="input100" type="text" name="name" placeholder="KYC details">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+							<i class="fa fa-address-book" aria-hidden="true"></i>
+						</span>
+                        </div>
+                    {% endif %}
+
                 </div>
 
                 <div class="container-login100-form-btn">
                     <button class="login100-form-btn">
                         Submit
                     </button>
-                     {% if message.get('status') == 'false' %}
+                    {% if message.get('status') == 'false' %}
                         <span class="login200-form-title">{{ message.get('message') }}</span>
                     {% elif message.get('status') == 'true' %}
                         {{ url_for('dashboard') }}
@@ -83,6 +119,14 @@
     $('.js-tilt').tilt({
         scale: 1.1
     })
+</script>
+
+<script>
+    function fileUpload() {
+        var x = document.createElement("INPUT");
+        x.setAttribute("type", "file");
+        document.body.appendChild(x);
+    }
 </script>
 <!--===============================================================================================-->
 {#<script src="static/js/main.js"></script>#}

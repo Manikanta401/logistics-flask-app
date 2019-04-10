@@ -41,6 +41,7 @@ def login():
     if request.method == 'POST':
 
         email_id = request.form.get('email')
+        email_id = email_id.lower()
         password = request.form.get('password')
         if (email_id is not None and password is not None):
 
@@ -147,10 +148,15 @@ def dashboard():
 def details():
     message = {'status': "intermediate"}
 
+    details = DetailsModels.query.filter_by(email=current_user.email).first()
+    if (details is not None):
+        return redirect(url_for("dashboard"))
+
     if request.method == 'POST':
         business_type = request.form.get('type')
         buisness_name = request.form.get('name')
         business_email = request.form.get('email')
+
         details = (business_email, business_type, buisness_name)
         details = DetailsModels.query.filter_by(email=current_user.email).first()
         if (details is None):
@@ -172,7 +178,7 @@ def details():
             return render_template('business_details.html', message=message)
         else:
             message = {"status": "true"}
-            return render_template('business_details.html', message=message)
+            return redirect(url_for('dashboard'))
 
     return render_template('business_details.html', message=message)
 

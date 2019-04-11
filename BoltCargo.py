@@ -97,7 +97,7 @@ def register():
 
                     db.session.add(new_user)
                     db.session.commit()
-                    login_user(user=user)
+                    login_user(user=new_user)
                     return redirect(url_for('details'))
 
                 else:
@@ -117,6 +117,13 @@ def hello_world():
     message = {'status': "intermediate"}
     return render_template('index.html', message=message)
 
+@app.route('/index')
+def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    message = {'status': "intermediate"}
+    return render_template('index.html', message=message)
+
 
 # This is the dashboard page of the application
 # This shows the user details and in future the more functionality will be added, like booking transporters etc
@@ -124,19 +131,22 @@ def hello_world():
 @login_required
 def dashboard():
     data = {}
+    user_login = UserModel.query.filter_by(email=current_user.email).first()
     details = DetailsModels.query.filter_by(email=current_user.email).first()
-    if (details is not None):
-        data = {'name': details.business_name, 'type': details.user_type, 'email': details.email}
+    if (details is not None and user_login is not None):
+        data = {'business_name': details.business_name, 'business_type': details.user_type,
+                'business_email': details.business_email, 'email': user_login.email}
         return render_template('dashboard.html', message=data)
     if request.method == 'POST':
-        type = request.form.get('type')
-        name = request.form.get('name')
-        email = request.form.get('email')
+        business_type = request.form.get('type')
+        business_name = request.form.get('name')
+        business_email = request.form.get('email')
+        email = user_login.email
         conn = create_connection('C:/Users/Amar/PycharmProjects/BoltCargo/login.db')
         with conn:
-            create_details(conn, (email, type, name))
+            create_details(conn, (business_email, business_type, business_name, email))
 
-        data = {'name': name, 'type': type, 'email': email}
+        data = {'business_name': name, 'business_type': type, 'business_email': email, 'email': email}
 
     return render_template('dashboard.html', message=data)
 
@@ -147,9 +157,9 @@ def dashboard():
 @app.route('/details', methods=['POST', 'GET'])
 def details():
     message = {'status': "intermediate"}
-
+    user_login = UserModel.query.filter_by(email=current_user.email).first()
     details = DetailsModels.query.filter_by(email=current_user.email).first()
-    if (details is not None):
+    if (details is not None and user_login is not None):
         return redirect(url_for("dashboard"))
 
     if request.method == 'POST':
@@ -157,12 +167,12 @@ def details():
         buisness_name = request.form.get('name')
         business_email = request.form.get('email')
 
-        details = (business_email, business_type, buisness_name)
+        user_details = (business_email, business_type, buisness_name, user_login.email)
         details = DetailsModels.query.filter_by(email=current_user.email).first()
         if (details is None):
             conn = create_connection('C:/Users/Amar/PycharmProjects/BoltCargo/login.db')
             with conn:
-                create_details(conn, details)
+                create_details(conn, user_details)
 
         if (business_type is None or len(business_type) == 0):
             message = {"status": "false",
@@ -199,6 +209,15 @@ def authenticate():
     return render_template('otp_auth.html', message=message)
 
 
+@app.route('/logout', methods=['POST', 'GET'])
+def logout():
+    #user = UserModel.query.filter_by(email=current_user.email).first()
+#    user.is_authenticated = 'false'
+    logout_user()
+
+    return redirect(url_for('index'))
+
+
 # The method generates 4 digit OTP.
 # This was initially used for sending the OTP messages using Twilio.
 # This method might be needed in future for sending the OTPs.
@@ -221,16 +240,17 @@ class UserModel(UserMixin, db.Model):
 # It stores business email, business type, and business name
 class DetailsModels(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(100), unique=True)
+    business_email = db.Column(db.String(100), unique=True)
     user_type = db.Column(db.String(100))
     business_name = db.Column(db.String(100))
+    email = db.Column(db.String(100), unique=True)
 
 
 # This method inserts the details of the user into database.
 # It stores business email, business type, and business name from details page or dashboard page
 def create_details(conn, details_model):
-    sql = ''' INSERT INTO details_models(email,user_type,business_name)
-              VALUES(?,?,?) '''
+    sql = ''' INSERT INTO details_models(business_email,user_type,business_name,email)
+              VALUES(?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, details_model)
     return cur.lastrowid

@@ -12,6 +12,8 @@
     <meta name="description" content="Transporter">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
     <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.css'>
+    <link rel="stylesheet" type="text/css" href="static/css/util.css">
+    <link rel="stylesheet" type="text/css" href="static/css/main.css">
     <style>
         html, body, .page {
             width: 100%;
@@ -245,14 +247,18 @@
                         <a href="#t1">
                             <li class="icon fa fa-bolt" id="uno"></li>
                             <li class="icon fa fa-file-o" id="uno"></li>
+
                         </a>
+                        <button type="button" onclick="window.location.href='{{ url_for( 'logout' ) }}';"><i class="fa fa-sign-out"
+                                                                  style="font-size:24px;color:white"></i></button>
                     </ul>
                     <div class="page" id="p1">
                         <section class="icon fa fa-bolt"><span class="title">BoltCargo</span>
 
-                            <span class="hint">Welcome {{ message.get('name') }}!!</span>
+                            <span class="hint">Welcome {{ message.get('business_name') }}!!</span>
                             <span class="hint"> {{ message.get('email') }}</span>
-                            <span class="hint"> {{ message.get('type') }}</span>
+                            <span class="hint"> {{ message.get('business_type') }}</span>
+                            <span class="hint"> {{ message.get('business_email') }}</span>
                         </section>
                     </div>
                 </div>
